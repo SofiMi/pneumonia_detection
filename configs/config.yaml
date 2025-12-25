@@ -5,3 +5,7 @@ defaults:
   - training: default
 
 random_seed: 42
+
+mlflow:
+  tracking_uri: null
+  experiment_name: "pneumonia_detection_vit"

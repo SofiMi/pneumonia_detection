@@ -39,8 +39,11 @@ venv.bak/
 .DS_Store
 
 # --- Project Specific (Data & Models) ---
-data/
-#!data/.gitkeep
+data/*
+!data/**/*.dvc
+!data/**/.gitignore
+mlruns
+
 
 models/
 # !models/.gitkeep

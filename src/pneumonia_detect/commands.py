@@ -40,9 +40,6 @@ def train(config_name: str = "config"):
 
 
 def infer(image_path: str, config_name: str = "config"):
-    """
-    Команда запуска инференса.
-    """
     with initialize(version_base="1.3", config_path="../../configs"):
         cfg = compose(config_name=config_name)
 
