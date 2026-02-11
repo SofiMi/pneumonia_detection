@@ -1,4 +1,3 @@
-# Inference configuration
 paths:
   models_dir: "models"
   onnx_model: "models/model.onnx"
@@ -22,6 +21,6 @@ formatting:
   confidence_decimal_places: 4
 
 tensorrt:
-  mock_probabilities: [0.1, 0.9]  # Placeholder values for testing
+  mock_probabilities: [0.1, 0.9]
 
 supported_modes: ["pytorch", "onnx", "tensorrt", "triton"]

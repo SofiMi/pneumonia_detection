@@ -3,7 +3,7 @@ import subprocess
 import zipfile
 from pathlib import Path
 
-from . import constants
+from pneumonia_detect import constants
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def download_data(dataset_path: Path) -> None:
             log.info("Найден zip файл, выполняем распаковку...")
             for zip_file in zip_files:
                 try:
-                    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+                    with zipfile.ZipFile(zip_file, "r") as zip_ref:
                         zip_ref.extractall(dataset_path)
                     log.info(f"Архив {zip_file.name} успешно распакован.")
                     zip_file.unlink()

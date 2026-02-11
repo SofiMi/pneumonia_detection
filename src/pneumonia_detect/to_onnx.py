@@ -6,7 +6,7 @@ import torch
 from omegaconf import DictConfig
 from transformers import ViTForImageClassification, ViTImageProcessor
 
-from . import constants
+from pneumonia_detect import constants
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +50,10 @@ def export_to_onnx(cfg: DictConfig):
         do_constant_folding=True,
         input_names=[constants.ONNX_INPUT_NAME],
         output_names=[constants.ONNX_OUTPUT_NAME],
-        dynamic_axes={constants.ONNX_INPUT_NAME: {0: "batch_size"}, constants.ONNX_OUTPUT_NAME: {0: "batch_size"}},
+        dynamic_axes={
+            constants.ONNX_INPUT_NAME: {0: "batch_size"},
+            constants.ONNX_OUTPUT_NAME: {0: "batch_size"},
+        },
     )
 
     log.info("Модель успешно экспортирована в ONNX!")

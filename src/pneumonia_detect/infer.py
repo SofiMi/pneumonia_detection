@@ -9,10 +9,11 @@ from omegaconf import DictConfig
 from PIL import Image
 from transformers import ViTForImageClassification, ViTImageProcessor
 
-from . import constants
+from pneumonia_detect import constants
 
 try:
     import tensorrt as trt
+
     TRT_AVAILABLE = True
 except ImportError:
     TRT_AVAILABLE = False
@@ -76,7 +77,9 @@ def infer_onnx(image_path: Path, cfg: DictConfig):
     if not onnx_path.exists():
         raise FileNotFoundError(constants.ERROR_ONNX_NOT_FOUND)
 
-    session = ort.InferenceSession(str(onnx_path), providers=constants.DEFAULT_ONNX_PROVIDERS)
+    session = ort.InferenceSession(
+        str(onnx_path), providers=constants.DEFAULT_ONNX_PROVIDERS
+    )
     _, inputs_np = preprocess_image(image_path, cfg.model.name)
 
     input_name = session.get_inputs()[0].name
@@ -84,7 +87,9 @@ def infer_onnx(image_path: Path, cfg: DictConfig):
 
     probs = softmax(logits)
 
-    config_path = Path(cfg.training.output_dir) / "final_model" / constants.CONFIG_JSON_PATH
+    config_path = (
+        Path(cfg.training.output_dir) / "final_model" / constants.CONFIG_JSON_PATH
+    )
     id2label = get_labels(config_path)
 
     return probs, id2label
@@ -108,7 +113,9 @@ def infer_tensorrt(image_path: Path, cfg: DictConfig):
         _, inputs_np = preprocess_image(image_path, cfg.model.name)
         probs = np.array(constants.TENSORRT_MOCK_PROBABILITIES)
 
-    config_path = Path(cfg.training.output_dir) / "final_model" / constants.CONFIG_JSON_PATH
+    config_path = (
+        Path(cfg.training.output_dir) / "final_model" / constants.CONFIG_JSON_PATH
+    )
     id2label = get_labels(config_path)
 
     return probs, id2label
@@ -123,29 +130,39 @@ def infer_triton(image_path: Path, cfg: DictConfig):
 
     pixel_values = inputs_np["pixel_values"]
     data = {
-        "inputs": [{
-            "name": constants.TRITON_INPUT_NAME,
-            "shape": list(pixel_values.shape),
-            "datatype": constants.TRITON_OUTPUT_DATATYPE,
-            "data": pixel_values.flatten().tolist()
-        }]
+        "inputs": [
+            {
+                "name": constants.TRITON_INPUT_NAME,
+                "shape": list(pixel_values.shape),
+                "datatype": constants.TRITON_OUTPUT_DATATYPE,
+                "data": pixel_values.flatten().tolist(),
+            }
+        ]
     }
 
     try:
-        url = f"http://{constants.DEFAULT_TRITON_HOST}:{constants.DEFAULT_TRITON_PORT}/{constants.TRITON_API_VERSION}/models/{constants.TRITON_MODEL_NAME}/infer"
+        url = (
+            f"http://{constants.DEFAULT_TRITON_HOST}:{constants.DEFAULT_TRITON_PORT}/"
+            f"{constants.TRITON_API_VERSION}/models/{constants.TRITON_MODEL_NAME}/infer"
+        )
+
         headers = {"Content-Type": "application/json"}
 
-        json_data = json.dumps(data).encode('utf-8')
-        req = urllib.request.Request(url, data=json_data, headers=headers, method='POST')
+        json_data = json.dumps(data).encode("utf-8")
+        req = urllib.request.Request(
+            url, data=json_data, headers=headers, method="POST"
+        )
 
         with urllib.request.urlopen(req) as response:
-            result = json.loads(response.read().decode('utf-8'))
+            result = json.loads(response.read().decode("utf-8"))
 
         output_data = result["outputs"][0]["data"]
         logits = np.array(output_data).reshape(-1, constants.TRITON_OUTPUT_CLASSES)[0]
         probs = softmax(logits)
 
-        config_path = Path(cfg.training.output_dir) / "final_model" / constants.CONFIG_JSON_PATH
+        config_path = (
+            Path(cfg.training.output_dir) / "final_model" / constants.CONFIG_JSON_PATH
+        )
         id2label = get_labels(config_path)
 
         return probs, id2label
@@ -161,11 +178,13 @@ def run_inference(cfg: DictConfig, image_path: Path, mode: str = "onnx"):
         constants.SUPPORTED_MODES[0]: infer_pytorch,
         constants.SUPPORTED_MODES[1]: infer_onnx,
         constants.SUPPORTED_MODES[2]: infer_tensorrt,
-        constants.SUPPORTED_MODES[3]: infer_triton
+        constants.SUPPORTED_MODES[3]: infer_triton,
     }
 
     if mode not in constants.SUPPORTED_MODES:
-        raise ValueError(f"Неизвестный режим: {mode}. Доступны: {constants.SUPPORTED_MODES}")
+        raise ValueError(
+            f"Неизвестный режим: {mode}. Доступны: {constants.SUPPORTED_MODES}"
+        )
 
     log.info(f"Запуск инференса. Режим: {mode.upper()}")
 

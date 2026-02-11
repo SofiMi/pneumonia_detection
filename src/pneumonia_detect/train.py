@@ -1,7 +1,8 @@
 import logging
+import random
 import subprocess
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 import evaluate
 import matplotlib.pyplot as plt
@@ -27,7 +28,7 @@ from transformers import (
     ViTImageProcessor,
 )
 
-from . import constants
+from pneumonia_detect import constants
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -56,7 +57,11 @@ def save_static_plots_from_mlflow(run_id: str):
         run = client.get_run(run_id)
 
         metrics_history = {}
-        for metric_name in [constants.METRIC_TRAIN_LOSS, constants.METRIC_EVAL_LOSS, constants.METRIC_EVAL_ACCURACY]:
+        for metric_name in [
+            constants.METRIC_TRAIN_LOSS,
+            constants.METRIC_EVAL_LOSS,
+            constants.METRIC_EVAL_ACCURACY,
+        ]:
             try:
                 history = client.get_metric_history(run_id, metric_name)
                 if history:
@@ -65,40 +70,75 @@ def save_static_plots_from_mlflow(run_id: str):
             except Exception as e:
                 log.warning(f"Не удалось получить историю для {metric_name}: {e}")
 
-        if constants.METRIC_TRAIN_LOSS in metrics_history and metrics_history[constants.METRIC_TRAIN_LOSS]:
+        if (
+            constants.METRIC_TRAIN_LOSS in metrics_history
+            and metrics_history[constants.METRIC_TRAIN_LOSS]
+        ):
             steps, values = zip(*metrics_history[constants.METRIC_TRAIN_LOSS])
             plt.figure(figsize=constants.FIGURE_SIZE)
-            plt.plot(steps, values, label="Train Loss", color=constants.COLOR_BLUE, linewidth=2)
+            plt.plot(
+                steps,
+                values,
+                label="Train Loss",
+                color=constants.COLOR_BLUE,
+                linewidth=2,
+            )
             plt.xlabel("Step")
             plt.ylabel("Loss")
             plt.title("Training Loss")
             plt.legend()
             plt.grid(True)
-            plt.savefig(plots_dir / "train_loss.png", dpi=constants.DPI_SETTING, bbox_inches='tight')
+            plt.savefig(
+                plots_dir / "train_loss.png",
+                dpi=constants.DPI_SETTING,
+                bbox_inches="tight",
+            )
             plt.close()
 
-        if constants.METRIC_EVAL_LOSS in metrics_history and metrics_history[constants.METRIC_EVAL_LOSS]:
+        if (
+            constants.METRIC_EVAL_LOSS in metrics_history
+            and metrics_history[constants.METRIC_EVAL_LOSS]
+        ):
             steps, values = zip(*metrics_history[constants.METRIC_EVAL_LOSS])
             plt.figure(figsize=constants.FIGURE_SIZE)
-            plt.plot(steps, values, label="Eval Loss", color=constants.COLOR_RED, linewidth=2)
+            plt.plot(
+                steps, values, label="Eval Loss", color=constants.COLOR_RED, linewidth=2
+            )
             plt.xlabel("Step")
             plt.ylabel("Loss")
             plt.title("Validation Loss")
             plt.legend()
             plt.grid(True)
-            plt.savefig(plots_dir / "eval_loss.png", dpi=constants.DPI_SETTING, bbox_inches='tight')
+            plt.savefig(
+                plots_dir / "eval_loss.png",
+                dpi=constants.DPI_SETTING,
+                bbox_inches="tight",
+            )
             plt.close()
 
-        if constants.METRIC_EVAL_ACCURACY in metrics_history and metrics_history[constants.METRIC_EVAL_ACCURACY]:
+        if (
+            constants.METRIC_EVAL_ACCURACY in metrics_history
+            and metrics_history[constants.METRIC_EVAL_ACCURACY]
+        ):
             steps, values = zip(*metrics_history[constants.METRIC_EVAL_ACCURACY])
             plt.figure(figsize=constants.FIGURE_SIZE)
-            plt.plot(steps, values, label="Accuracy", color=constants.COLOR_GREEN, linewidth=2)
+            plt.plot(
+                steps,
+                values,
+                label="Accuracy",
+                color=constants.COLOR_GREEN,
+                linewidth=2,
+            )
             plt.xlabel("Step")
             plt.ylabel("Accuracy")
             plt.title("Validation Accuracy")
             plt.legend()
             plt.grid(True)
-            plt.savefig(plots_dir / "eval_accuracy.png", dpi=constants.DPI_SETTING, bbox_inches='tight')
+            plt.savefig(
+                plots_dir / "eval_accuracy.png",
+                dpi=constants.DPI_SETTING,
+                bbox_inches="tight",
+            )
             plt.close()
 
     except Exception as e:
@@ -110,17 +150,33 @@ def save_static_plots_from_mlflow(run_id: str):
             plt.figure(figsize=constants.FIGURE_SIZE_SMALL)
             metric_names = list(final_metrics.keys())
             metric_values = list(final_metrics.values())
-            plt.bar(metric_names, metric_values, color=[constants.COLOR_BLUE, constants.COLOR_RED, constants.COLOR_GREEN])
+            plt.bar(
+                metric_names,
+                metric_values,
+                color=[
+                    constants.COLOR_BLUE,
+                    constants.COLOR_RED,
+                    constants.COLOR_GREEN,
+                ],
+            )
             plt.title("Final Metrics")
             plt.ylabel("Value")
             plt.xticks(rotation=45)
             plt.tight_layout()
-            plt.savefig(plots_dir / "final_metrics.png", dpi=constants.DPI_SETTING, bbox_inches='tight')
+            plt.savefig(
+                plots_dir / "final_metrics.png",
+                dpi=constants.DPI_SETTING,
+                bbox_inches="tight",
+            )
             plt.close()
             log.info("График финальных метрик сохранен")
 
 
-def prepare_dataframe(dataset_path: str, random_state: int = constants.DEFAULT_RANDOM_SEED, max_samples: int = None) -> pd.DataFrame:
+def prepare_dataframe(
+    dataset_path: str,
+    random_state: int = constants.DEFAULT_RANDOM_SEED,
+    max_samples: int = None,
+) -> pd.DataFrame:
     base_path = Path(dataset_path)
     file_names: List[str] = []
     labels: List[str] = []
@@ -135,11 +191,14 @@ def prepare_dataframe(dataset_path: str, random_state: int = constants.DEFAULT_R
 
     log.info(f"Найдено {len(found_files)} файлов в папке train.")
 
-    import random
     random.seed(random_state)
     half_count = len(found_files) // constants.DATA_REDUCTION_FACTOR
     found_files = random.sample(found_files, half_count)
-    log.info(f"Используется 1/{constants.DATA_REDUCTION_FACTOR} часть данных: {len(found_files)} файлов для быстрого обучения.")
+    log.info(
+        "Используется 1/%s часть данных: %s файлов для быстрого обучения.",
+        constants.DATA_REDUCTION_FACTOR,
+        len(found_files),
+    )
 
     for file_path in found_files:
         label = file_path.parent.name
@@ -182,13 +241,15 @@ def get_transforms(processor):
 
     def train_transforms(examples):
         examples["pixel_values"] = [
-            _train_transforms(image.convert(constants.IMAGE_MODE_RGB)) for image in examples["image"]
+            _train_transforms(image.convert(constants.IMAGE_MODE_RGB))
+            for image in examples["image"]
         ]
         return examples
 
     def val_transforms(examples):
         examples["pixel_values"] = [
-            _val_transforms(image.convert(constants.IMAGE_MODE_RGB)) for image in examples["image"]
+            _val_transforms(image.convert(constants.IMAGE_MODE_RGB))
+            for image in examples["image"]
         ]
         return examples
 
@@ -272,9 +333,15 @@ def train_model(cfg: DictConfig):
             num_train_epochs=cfg.training.num_train_epochs,
             weight_decay=cfg.model.weight_decay,
             warmup_steps=cfg.training.warmup_steps,
-            logging_steps=getattr(cfg.training, 'logging_steps', constants.DEFAULT_LOGGING_STEPS),
-            eval_steps=getattr(cfg.training, 'eval_steps', constants.DEFAULT_EVAL_STEPS),
-            save_steps=getattr(cfg.training, 'eval_steps', constants.DEFAULT_EVAL_STEPS),
+            logging_steps=getattr(
+                cfg.training, "logging_steps", constants.DEFAULT_LOGGING_STEPS
+            ),
+            eval_steps=getattr(
+                cfg.training, "eval_steps", constants.DEFAULT_EVAL_STEPS
+            ),
+            save_steps=getattr(
+                cfg.training, "eval_steps", constants.DEFAULT_EVAL_STEPS
+            ),
             remove_unused_columns=False,
             save_total_limit=cfg.training.save_total_limit,
             load_best_model_at_end=True,

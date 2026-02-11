@@ -7,10 +7,11 @@ from dvc.repo import Repo
 from hydra import compose, initialize
 
 from pneumonia_detect.data_utils import download_data
-from pneumonia_detect.train import train_model
 from pneumonia_detect.infer import run_inference
+from pneumonia_detect.train import train_model
 from pneumonia_detect.triton_setup import create_triton_model_repository
-from . import constants
+
+from pneumonia_detect import constants
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -50,7 +51,9 @@ def infer(image_path: str, mode: str = "onnx", config_name: str = "config"):
         sys.exit(1)
 
     if mode not in constants.SUPPORTED_MODES:
-        log.error(f"Неподдерживаемый режим: {mode}. Доступны: {constants.SUPPORTED_MODES}")
+        log.error(
+            f"Неподдерживаемый режим: {mode}. Доступны: {constants.SUPPORTED_MODES}"
+        )
         sys.exit(1)
 
     run_inference(cfg, image_file, mode=mode)
@@ -59,11 +62,10 @@ def infer(image_path: str, mode: str = "onnx", config_name: str = "config"):
 def setup_triton(model_version: str = constants.DEFAULT_MODEL_VERSION):
     """
     Подготовка модели для Triton Inference Server.
-    
+
     Args:
         model_version: Версия модели
     """
-    from pneumonia_detect.triton_setup import create_triton_model_repository
 
     if not create_triton_model_repository(model_version):
         log.error("Не удалось создать репозиторий моделей")
