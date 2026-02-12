@@ -160,7 +160,6 @@ cd pneumonia_detection
 
 ```
 pip install poetry
-poetry install
 ```
 
 Создание окружния
@@ -168,6 +167,7 @@ poetry install
 ```
 python3.10 -m venv venv
 source venv/bin/activate
+poetry install
 ```
 
 Настройка хуков качества кода (Pre-commit):
@@ -193,7 +193,11 @@ poetry run pre-commit install
 
 ## Train
 
-Команда запуска:
+Программа ожидаем, что будет запущен mlFlow на 8000 порту (можете посмотреть, как это сделать в пункте логирования). Если вы не хотите запустить mlFlow, то поменяйте в конфиге `configs/config.yaml` `tracking_uri: "http://127.0.0.1:8080"` на `tracking_uri: null`.
+
+Есть возможность не обучать на всем датасете, а на его рандомной выборке. Для этого в файле `constants.py` есть переменная `DATA_REDUCTION_FACTOR`, которая указывает на необходимую часть для обучения.
+
+Команда запуска обучения:
 
 ```
 poetry run python src/pneumonia_detect/commands.py train
